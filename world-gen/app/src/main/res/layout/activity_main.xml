@@ -41,5 +41,14 @@
         android:layout_height="wrap_content"
         android:text="@string/resolve_button_text"/>
 
+    <EditText
+        android:id="@+id/num_id_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/node_id_number"
+        android:inputType="number" />
+
   </LinearLayout>
 </RelativeLayout>

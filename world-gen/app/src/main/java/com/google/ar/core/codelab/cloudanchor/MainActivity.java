@@ -26,6 +26,8 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Anchor.CloudAnchorState;
@@ -84,6 +86,10 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
   // Lock needed for synchronization.
   private final Object singleTapAnchorLock = new Object();
 
+  // EditText for setting IDs
+  EditText editTextID = null;
+
+
   // Tap handling and UI. This app allows you to place at most one anchor.
   @GuardedBy("singleTapAnchorLock")
   private MotionEvent queuedSingleTap;
@@ -120,13 +126,18 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
           && queuedSingleTap != null
           && currentTrackingState == TrackingState.TRACKING
           && appAnchorState == AppAnchorState.NONE) {
-        for (HitResult hit : currentFrame.hitTest(queuedSingleTap)) {
-          if (shouldCreateAnchorWithHit(hit)) {
-            Anchor newAnchor = session.hostCloudAnchor(hit.createAnchor());
-            setNewAnchor(newAnchor);
-            appAnchorState = AppAnchorState.HOSTING;
-            snackbarHelper.showMessage(this, "Now hosting anchor...");
-            break;
+        if (editTextID.getText().toString().isEmpty()) {
+          // prompt user to input an id
+          snackbarHelper.showMessageWithDismiss(this, "Enter a Node ID");
+        } else {
+          for (HitResult hit : currentFrame.hitTest(queuedSingleTap)) {
+            if (shouldCreateAnchorWithHit(hit)) {
+              Anchor newAnchor = session.hostCloudAnchor(hit.createAnchor());
+              setNewAnchor(newAnchor);
+              appAnchorState = AppAnchorState.HOSTING;
+              snackbarHelper.showMessage(this, "Now hosting anchor...");
+              break;
+            }
           }
         }
       }
@@ -164,13 +175,16 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
           snackbarHelper.showMessageWithDismiss(this, "Error hosting anchor: " + cloudState);
           appAnchorState = AppAnchorState.NONE;
         } else if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+          int shortID = Integer.parseInt(editTextID.getText().toString());
           storageManager.nextShortCode(
+                  shortID,
                   (shortCode) -> {
                     if (shortCode == null) {
                       snackbarHelper.showMessageWithDismiss(this, "Could not obtain a short code.");
                       return;
                     }
                     synchronized (singleTapAnchorLock) {
+                      editTextID.setText("");
                       storageManager.storeUsingShortCode(shortCode, anchor.getCloudAnchorId());
                       snackbarHelper.showMessageWithDismiss(
                               this, "Anchor hosted successfully! Cloud Short Code: " + shortCode);
@@ -215,6 +229,9 @@ public class MainActivity extends AppCompatActivity implements GLSurfaceView.Ren
     setContentView(R.layout.activity_main);
     surfaceView = findViewById(R.id.surfaceview);
     displayRotationHelper = new DisplayRotationHelper(this);
+
+    // Point idText to global field
+    editTextID = findViewById(R.id.num_id_text);
 
     // Set up tap listener.
     gestureDetector =

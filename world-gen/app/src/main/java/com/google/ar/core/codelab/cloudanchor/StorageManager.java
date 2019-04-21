@@ -38,7 +38,7 @@ class StorageManager {
   }
 
   /** Gets a new short code that can be used to store the anchor ID. */
-  void nextShortCode(ShortCodeListener listener) {
+  void nextShortCode(int uniqueCode, ShortCodeListener listener) {
     // Run a transaction on the node containing the next short code available. This increments the
     // value in the database and retrieves it in one atomic all-or-nothing operation.
     rootRef
@@ -47,11 +47,11 @@ class StorageManager {
                     new Transaction.Handler() {
                       @Override
                       public Transaction.Result doTransaction(MutableData currentData) {
-                        Integer shortCode = currentData.getValue(Integer.class);
-                        if (shortCode == null) {
-                          shortCode = INITIAL_SHORT_CODE - 1;
-                        }
-                        currentData.setValue(shortCode + 1);
+//                        Integer shortCode = currentData.getValue(Integer.class);
+//                        if (shortCode == null) {
+//                          shortCode = INITIAL_SHORT_CODE - 1;
+//                        }
+                        currentData.setValue(uniqueCode);
                         return Transaction.success(currentData);
                       }
 
